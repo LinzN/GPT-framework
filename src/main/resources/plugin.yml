@@ -1,0 +1,6 @@
+main: de.linzn.gptFramework.GPTFrameworkPlugin
+name: gpt-framework
+version: ${project.version}
+depend: [ ]
+buildJobName: ${buildServer.jobName}
+buildNumber: ${buildServer.buildNumber}
