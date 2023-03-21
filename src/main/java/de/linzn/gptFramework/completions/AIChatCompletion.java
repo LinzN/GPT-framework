@@ -9,8 +9,10 @@ import de.linzn.gptFramework.GPTPersonality;
 import de.stem.stemSystem.STEMSystemApp;
 
 import java.net.SocketTimeoutException;
+import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AIChatCompletion {
     private final GPTManager gptManager;
@@ -22,9 +24,8 @@ public class AIChatCompletion {
         this.gptManager = gptManager;
         this.gptPersonality = new GPTPersonality();
         this.dataMemory = new LinkedList<>();
-        this.openAiService = new OpenAiService(this.gptManager.getOpenAIToken());
+        this.openAiService = new OpenAiService(this.gptManager.getOpenAIToken(), Duration.ofMinutes(2));
     }
-
 
     public ChatMessage requestCompletion(List<String> inputData) {
 
