@@ -6,7 +6,9 @@ import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.service.OpenAiService;
 import de.linzn.gptFramework.GPTManager;
 import de.linzn.gptFramework.GPTPersonality;
+import de.stem.stemSystem.STEMSystemApp;
 
+import java.net.SocketTimeoutException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -37,9 +39,20 @@ public class AIChatCompletion {
         dataToSend.addFirst(this.gptPersonality.getPersonalityDescription());
 
         ChatCompletionRequest completionRequest = this.buildRequest(dataToSend);
-        List<ChatCompletionChoice> results = this.openAiService.createChatCompletion(completionRequest).getChoices();
 
-        return results.get(0).getMessage();
+        ChatMessage result;
+        try {
+            List<ChatCompletionChoice> results = this.openAiService.createChatCompletion(completionRequest).getChoices();
+            result =  results.get(0).getMessage();
+            this.dataMemory.addLast(result);
+        } catch(Exception e){
+            STEMSystemApp.LOGGER.ERROR(e);
+            ChatMessage chatMessage = new ChatMessage();
+            chatMessage.setContent("An error was catch in kernel stacktrace! Please check STEM logs for more informations!");
+            result = chatMessage;
+        }
+
+        return result;
     }
 
     private ChatCompletionRequest buildRequest(List<ChatMessage> dataList) {
