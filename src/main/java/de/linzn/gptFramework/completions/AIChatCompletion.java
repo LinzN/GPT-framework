@@ -8,17 +8,15 @@ import de.linzn.gptFramework.GPTManager;
 import de.linzn.gptFramework.GPTPersonality;
 import de.stem.stemSystem.STEMSystemApp;
 
-import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class AIChatCompletion {
-    private final GPTManager gptManager;
-    private final GPTPersonality gptPersonality;
-    private final OpenAiService openAiService;
-    private final LinkedList<ChatMessage> dataMemory;
+    private GPTManager gptManager;
+    private GPTPersonality gptPersonality;
+    private OpenAiService openAiService;
+    private LinkedList<ChatMessage> dataMemory;
 
     public AIChatCompletion(GPTManager gptManager) {
         this.gptManager = gptManager;
@@ -27,7 +25,7 @@ public class AIChatCompletion {
         this.openAiService = new OpenAiService(this.gptManager.getOpenAIToken(), Duration.ofMinutes(2));
     }
 
-    public ChatMessage requestCompletion(List<String> inputData) {
+    public String requestCompletion(List<String> inputData) {
 
         for (String input : inputData) {
             ChatMessage chatMessage = new ChatMessage();
@@ -53,7 +51,7 @@ public class AIChatCompletion {
             result = chatMessage;
         }
 
-        return result;
+        return result.getContent();
     }
 
     private ChatCompletionRequest buildRequest(List<ChatMessage> dataList) {
@@ -63,5 +61,12 @@ public class AIChatCompletion {
                 .n(1)
                 .user("STEM-SYSTEM")
                 .build();
+    }
+
+    public void destroy(){
+        this.gptPersonality = null;
+        this.dataMemory = null;
+        this.openAiService = null;
+        this.gptManager = null;
     }
 }
