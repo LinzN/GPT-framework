@@ -36,7 +36,7 @@ public class GPTFrameworkPlugin extends STEMPlugin {
 
     private void saveConfig(){
         getDefaultConfig().getString("openAI.token", "xxx");
-        getDefaultConfig().getString("personality.model", "gpt-3.5-turbo");
+        getDefaultConfig().getString("personality.model", "gpt-3.5-turbo-16k");
         getDefaultConfig().getString("personality.user", "STEM-SYSTEM");
         getDefaultConfig().getString("personality.description", "Hello, you are Jarvis");
         getDefaultConfig().save();

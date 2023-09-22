@@ -1,8 +1,10 @@
 package de.linzn.gptFramework;
 
 import de.linzn.gptFramework.completions.AIChatCompletion;
+import de.linzn.gptFramework.completions.AIEventCompletion;
 import de.linzn.gptFramework.completions.AIImageCompletion;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -60,6 +62,10 @@ public class GPTManager {
 
     public synchronized AIImageCompletion createAIImageCompletion() {
         return new AIImageCompletion(this);
+    }
+
+    public synchronized AIEventCompletion createAIEventCompletion(){
+        return new AIEventCompletion(this);
     }
 
     public String getOpenAIToken() {

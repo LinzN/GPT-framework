@@ -14,6 +14,12 @@ public class GPTPersonality {
         this.personalityDescription = GPTFrameworkPlugin.gptFrameworkPlugin.getDefaultConfig().getString("personality.description");
     }
 
+    public GPTPersonality(String name){
+        this.model = GPTFrameworkPlugin.gptFrameworkPlugin.getDefaultConfig().getString(name + ".personality.model");
+        this.user = GPTFrameworkPlugin.gptFrameworkPlugin.getDefaultConfig().getString(name + ".personality.user");
+        this.personalityDescription = GPTFrameworkPlugin.gptFrameworkPlugin.getDefaultConfig().getString(name + ".personality.description");
+    }
+
     public ChatMessage getPersonalityDescription() {
         ChatMessage chatMessage = new ChatMessage();
         chatMessage.setRole("system");

@@ -20,22 +20,25 @@ public class AIImageCompletion {
 
     public String requestCompletion(String prompt) {
         CreateImageRequest imageRequest = this.buildRequest(prompt);
-        String url;
+        StringBuilder url = new StringBuilder();
         try {
             List<Image> results = this.openAiService.createImage(imageRequest).getData();
-            url = results.get(0).getUrl();
+            for(Image result : results){
+                url.append(" ").append(result.getUrl());
+            }
+            //url = results.get(0).getUrl();
         } catch (Exception e) {
             STEMSystemApp.LOGGER.ERROR(e);
-            url = "An error was catch in kernel stacktrace! Please check STEM logs for more informations!";
+            url = new StringBuilder("An error was catch in kernel stacktrace! Please check STEM logs for more informations!");
         }
 
-        return url;
+        return url.toString();
     }
 
     private CreateImageRequest buildRequest(String prompt) {
         return CreateImageRequest.builder()
                 .prompt(prompt)
-                .n(1)
+                .n(3)
                 .user("STEM-SYSTEM")
                 .build();
     }

@@ -57,7 +57,7 @@ public class AIChatCompletion {
     private ChatCompletionRequest buildRequest(List<ChatMessage> dataList) {
         return ChatCompletionRequest.builder()
                 .messages(dataList)
-                .model("gpt-3.5-turbo")
+                .model("gpt-3.5-turbo-16k")
                 .n(1)
                 .user("STEM-SYSTEM")
                 .build();
