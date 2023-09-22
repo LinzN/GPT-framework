@@ -50,7 +50,13 @@ public class AIEventCompletion {
             result = chatMessage;
         }
 
-        return new JSONObject(result.getContent());
+        if(result.getContent().startsWith("{") && result.getContent().endsWith("}")){
+            return new JSONObject(result.getContent());
+        } else {
+            JSONObject invalidOutput = new JSONObject();
+            invalidOutput.put("output", result.getContent());
+            return invalidOutput;
+        }
     }
 
     private ChatCompletionRequest buildRequest(List<ChatMessage> dataList) {
