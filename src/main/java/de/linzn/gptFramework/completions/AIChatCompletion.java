@@ -35,16 +35,22 @@ public class AIChatCompletion {
         }
 
         LinkedList<ChatMessage> dataToSend = new LinkedList<>(this.dataMemory);
+        if (this.dataMemory.size() > 20) {
+            STEMSystemApp.LOGGER.INFO("Trim input to 20");
+            dataToSend = new LinkedList<>(dataToSend.subList(dataToSend.size() - 20, dataToSend.size()));
+        }
+
         dataToSend.addFirst(this.gptPersonality.getPersonalityDescription());
+
 
         ChatCompletionRequest completionRequest = this.buildRequest(dataToSend);
 
         ChatMessage result;
         try {
             List<ChatCompletionChoice> results = this.openAiService.createChatCompletion(completionRequest).getChoices();
-            result =  results.get(0).getMessage();
+            result = results.get(0).getMessage();
             this.dataMemory.addLast(result);
-        } catch(Exception e){
+        } catch (Exception e) {
             STEMSystemApp.LOGGER.ERROR(e);
             ChatMessage chatMessage = new ChatMessage();
             chatMessage.setContent("An error was catch in kernel stacktrace! Please check STEM logs for more informations!");
@@ -57,13 +63,13 @@ public class AIChatCompletion {
     private ChatCompletionRequest buildRequest(List<ChatMessage> dataList) {
         return ChatCompletionRequest.builder()
                 .messages(dataList)
-                .model("gpt-3.5-turbo-16k")
+                .model(this.gptPersonality.getModel())
                 .n(1)
                 .user("STEM-SYSTEM")
                 .build();
     }
 
-    public void destroy(){
+    public void destroy() {
         this.gptPersonality = null;
         this.dataMemory = null;
         this.openAiService = null;
