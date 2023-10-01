@@ -6,23 +6,30 @@ import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.service.OpenAiService;
 import de.linzn.gptFramework.GPTManager;
 import de.linzn.gptFramework.GPTPersonality;
+import de.linzn.gptFramework.memory.DatabaseMemory;
 import de.stem.stemSystem.STEMSystemApp;
+import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 
 import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
 
 public class AIChatCompletion {
+
+    private final STEMPlugin identityPlugin;
+    private final String identity;
     private GPTManager gptManager;
     private GPTPersonality gptPersonality;
+    private DatabaseMemory databaseMemory;
     private OpenAiService openAiService;
-    private LinkedList<ChatMessage> dataMemory;
 
-    public AIChatCompletion(GPTManager gptManager) {
+    public AIChatCompletion(GPTManager gptManager, STEMPlugin identityPlugin, String identity) {
+        this.identityPlugin = identityPlugin;
+        this.identity = identity;
         this.gptManager = gptManager;
         this.gptPersonality = new GPTPersonality();
-        this.dataMemory = new LinkedList<>();
         this.openAiService = new OpenAiService(this.gptManager.getOpenAIToken(), Duration.ofMinutes(2));
+        this.databaseMemory = new DatabaseMemory(this);
     }
 
     public String requestCompletion(List<String> inputData) {
@@ -31,29 +38,22 @@ public class AIChatCompletion {
             ChatMessage chatMessage = new ChatMessage();
             chatMessage.setRole("user");
             chatMessage.setContent(input);
-            this.dataMemory.addLast(chatMessage);
+            this.databaseMemory.memorize(chatMessage);
         }
 
-        LinkedList<ChatMessage> dataToSend = new LinkedList<>(this.dataMemory);
-        if (this.dataMemory.size() > 20) {
-            STEMSystemApp.LOGGER.INFO("Trim input to 20");
-            dataToSend = new LinkedList<>(dataToSend.subList(dataToSend.size() - 20, dataToSend.size()));
-        }
-
+        LinkedList<ChatMessage> dataToSend = this.databaseMemory.getMemory();
         dataToSend.addFirst(this.gptPersonality.getPersonalityDescription());
-
-
         ChatCompletionRequest completionRequest = this.buildRequest(dataToSend);
 
         ChatMessage result;
         try {
             List<ChatCompletionChoice> results = this.openAiService.createChatCompletion(completionRequest).getChoices();
             result = results.get(0).getMessage();
-            this.dataMemory.addLast(result);
+            this.databaseMemory.memorize(result);
         } catch (Exception e) {
             STEMSystemApp.LOGGER.ERROR(e);
             ChatMessage chatMessage = new ChatMessage();
-            chatMessage.setContent("An error was catch in kernel stacktrace! Please check STEM logs for more informations!");
+            chatMessage.setContent("An error was catch in kernel stacktrace! Please check STEM logs for more information!");
             result = chatMessage;
         }
 
@@ -71,8 +71,16 @@ public class AIChatCompletion {
 
     public void destroy() {
         this.gptPersonality = null;
-        this.dataMemory = null;
         this.openAiService = null;
         this.gptManager = null;
+        this.databaseMemory = null;
+    }
+
+    public STEMPlugin getIdentityPlugin() {
+        return identityPlugin;
+    }
+
+    public String getIdentity() {
+        return identity;
     }
 }

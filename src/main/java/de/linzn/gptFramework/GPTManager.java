@@ -61,7 +61,7 @@ public class GPTManager {
         }
         Map<String, AIChatCompletion> pluginMap = this.aiChatMap.get(stemPlugin);
         if (!pluginMap.containsKey(identity)) {
-            pluginMap.put(identity, new AIChatCompletion(this));
+            pluginMap.put(identity, new AIChatCompletion(this, stemPlugin, identity));
         }
         return pluginMap.get(identity);
     }
