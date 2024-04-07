@@ -4,7 +4,6 @@ import de.linzn.gptFramework.completions.AIChatCompletion;
 import de.linzn.gptFramework.completions.AIEventCompletion;
 import de.linzn.gptFramework.completions.AIImageCompletion;
 import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.informationModule.AiTextEngine;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.json.JSONObject;
 
@@ -21,8 +20,13 @@ public class GPTManager {
         this.openAIToken = stemPlugin.getDefaultConfig().getString("openAI.token");
         this.aiChatMap = new ConcurrentHashMap<>();
         STEMSystemApp.getInstance().getInformationModule().registerAiTextEngine(s -> {
-            JSONObject jsonObject = createAIEventCompletion().requestEventResponse(s);
-            return jsonObject.getString("output");
+            try {
+                JSONObject jsonObject = createAIEventCompletion().requestEventResponse(s);
+                return jsonObject.getString("output");
+            } catch (Exception e) {
+                STEMSystemApp.LOGGER.ERROR(e);
+                return s;
+            }
         });
     }
 
@@ -70,7 +74,7 @@ public class GPTManager {
         return new AIImageCompletion(this);
     }
 
-    public synchronized AIEventCompletion createAIEventCompletion(){
+    public synchronized AIEventCompletion createAIEventCompletion() {
         return new AIEventCompletion(this);
     }
 

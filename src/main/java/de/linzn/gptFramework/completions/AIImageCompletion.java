@@ -38,7 +38,8 @@ public class AIImageCompletion {
     private CreateImageRequest buildRequest(String prompt) {
         return CreateImageRequest.builder()
                 .prompt(prompt)
-                .n(3)
+                .model("dall-e-3")
+                .n(1)
                 .user("STEM-SYSTEM")
                 .build();
     }
