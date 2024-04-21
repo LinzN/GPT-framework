@@ -19,7 +19,7 @@ public class GPTManager {
     public GPTManager(STEMPlugin stemPlugin) {
         this.openAIToken = stemPlugin.getDefaultConfig().getString("openAI.token");
         this.aiChatMap = new ConcurrentHashMap<>();
-        STEMSystemApp.getInstance().getInformationModule().registerAiTextEngine(s -> {
+        /*STEMSystemApp.getInstance().getInformationModule().registerAiTextEngine(s -> {
             try {
                 JSONObject jsonObject = createAIEventCompletion().requestEventResponse(s);
                 return jsonObject.getString("output");
@@ -27,7 +27,7 @@ public class GPTManager {
                 STEMSystemApp.LOGGER.ERROR(e);
                 return s;
             }
-        });
+        });*/
     }
 
     public synchronized boolean hasAIChatCompletion(STEMPlugin stemPlugin, String identity) {
