@@ -1,16 +1,20 @@
 package de.linzn.gptFramework.completions;
 
-import com.theokanning.openai.completion.chat.ChatCompletionChoice;
-import com.theokanning.openai.completion.chat.ChatCompletionRequest;
-import com.theokanning.openai.completion.chat.ChatMessage;
-import com.theokanning.openai.service.OpenAiService;
+
+import com.azure.ai.openai.OpenAIClient;
+import com.azure.ai.openai.OpenAIClientBuilder;
+import com.azure.ai.openai.models.ChatChoice;
+import com.azure.ai.openai.models.ChatCompletions;
+import com.azure.ai.openai.models.ChatCompletionsOptions;
+import com.azure.ai.openai.models.ChatRole;
+import com.azure.core.credential.KeyCredential;
 import de.linzn.gptFramework.GPTManager;
 import de.linzn.gptFramework.GPTPersonality;
 import de.linzn.gptFramework.memory.DatabaseMemory;
+import de.linzn.openai.ChatMessage;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 
-import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,52 +25,50 @@ public class AIChatCompletion {
     private GPTManager gptManager;
     private GPTPersonality gptPersonality;
     private DatabaseMemory databaseMemory;
-    private OpenAiService openAiService;
+    private OpenAIClient openAiService;
 
     public AIChatCompletion(GPTManager gptManager, STEMPlugin identityPlugin, String identity) {
         this.identityPlugin = identityPlugin;
         this.identity = identity;
         this.gptManager = gptManager;
         this.gptPersonality = new GPTPersonality();
-        this.openAiService = new OpenAiService(this.gptManager.getOpenAIToken(), Duration.ofMinutes(2));
+        this.openAiService = new OpenAIClientBuilder()
+                .credential(new KeyCredential(this.gptManager.getOpenAIToken()))
+                .buildClient();
         this.databaseMemory = new DatabaseMemory(this);
     }
 
     public String requestCompletion(List<String> inputData) {
-
+        STEMSystemApp.LOGGER.CONFIG("Using new chat completion");
         for (String input : inputData) {
-            ChatMessage chatMessage = new ChatMessage();
-            chatMessage.setRole("user");
-            chatMessage.setContent(input);
+            ChatMessage chatMessage = new ChatMessage(input, ChatRole.USER);
             this.databaseMemory.memorize(chatMessage);
         }
 
         LinkedList<ChatMessage> dataToSend = this.databaseMemory.getMemory();
         dataToSend.addFirst(this.gptPersonality.getPersonalityDescription());
-        ChatCompletionRequest completionRequest = this.buildRequest(dataToSend);
+        ChatCompletionsOptions completionRequest = this.buildRequest(dataToSend);
 
-        ChatMessage result;
+        ChatMessage message;
         try {
-            List<ChatCompletionChoice> results = this.openAiService.createChatCompletion(completionRequest).getChoices();
-            result = results.get(0).getMessage();
-            this.databaseMemory.memorize(result);
+            ChatCompletions chatCompletions = this.openAiService.getChatCompletions(this.gptPersonality.getModel(), completionRequest);
+            ChatChoice choice = chatCompletions.getChoices().get(0);
+            message = new ChatMessage(choice.getMessage());
+            this.databaseMemory.memorize(message);
         } catch (Exception e) {
             STEMSystemApp.LOGGER.ERROR(e);
-            ChatMessage chatMessage = new ChatMessage();
-            chatMessage.setContent("An error was catch in kernel stacktrace! Please check STEM logs for more information!");
-            result = chatMessage;
+            message = new ChatMessage("An error was catch in kernel stacktrace! Please check STEM logs for more information!", ChatRole.ASSISTANT);
         }
 
-        return result.getContent();
+        return message.getContent();
     }
 
-    private ChatCompletionRequest buildRequest(List<ChatMessage> dataList) {
-        return ChatCompletionRequest.builder()
-                .messages(dataList)
-                .model(this.gptPersonality.getModel())
-                .n(1)
-                .user("STEM-SYSTEM")
-                .build();
+    private ChatCompletionsOptions buildRequest(List<ChatMessage> dataList) {
+        ChatCompletionsOptions options = new ChatCompletionsOptions(ChatMessage.convertToRequestMessage(dataList));
+        options.setN(1);
+        options.setUser("STEM-SYSTEM");
+        options.setModel(this.gptPersonality.getModel());
+        return options;
     }
 
     public void destroy() {

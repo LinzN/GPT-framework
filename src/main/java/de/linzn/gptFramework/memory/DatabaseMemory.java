@@ -1,7 +1,9 @@
 package de.linzn.gptFramework.memory;
 
-import com.theokanning.openai.completion.chat.ChatMessage;
+
+import com.azure.ai.openai.models.ChatRole;
 import de.linzn.gptFramework.completions.AIChatCompletion;
+import de.linzn.openai.ChatMessage;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.databaseModule.DatabaseModule;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
@@ -39,6 +41,8 @@ public class DatabaseMemory {
         String identity = this.aiChatCompletion.getIdentity();
         java.sql.Date date = new java.sql.Date(new Date().getTime());
 
+        String content = chatMessage.getContent();
+
         DatabaseModule databaseModule = STEMSystemApp.getInstance().getDatabaseModule();
 
         try {
@@ -49,8 +53,8 @@ public class DatabaseMemory {
             PreparedStatement preparedStmt = conn.prepareStatement(query);
             preparedStmt.setString(1, identityPlugin.getPluginName());
             preparedStmt.setString(2, identity);
-            preparedStmt.setString(3, chatMessage.getRole());
-            preparedStmt.setString(4, chatMessage.getContent());
+            preparedStmt.setString(3, chatMessage.getRole().getValue());
+            preparedStmt.setString(4, content);
             preparedStmt.setDate(5, date);
             preparedStmt.execute();
 
@@ -78,9 +82,7 @@ public class DatabaseMemory {
                 String role = rs.getString("role");
                 String content = rs.getString("content");
 
-                ChatMessage chatMessage = new ChatMessage();
-                chatMessage.setRole(role);
-                chatMessage.setContent(content);
+                ChatMessage chatMessage = new ChatMessage(content, ChatRole.fromString(role));
                 this.dataMemory.addFirst(chatMessage);
             }
 
