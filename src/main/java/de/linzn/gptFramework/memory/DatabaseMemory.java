@@ -8,7 +8,10 @@ import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.databaseModule.DatabaseModule;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.LinkedList;
 
@@ -45,12 +48,10 @@ public class DatabaseMemory {
 
         DatabaseModule databaseModule = STEMSystemApp.getInstance().getDatabaseModule();
 
-        try {
-            Connection conn = databaseModule.getConnection();
+        String query = "INSERT INTO plugin_gpt_memory_data (identityPlugin, identity, role, content, date) VALUES (?, ?, ?, ?, ?)";
+        try (Connection conn = databaseModule.getConnection();
+             PreparedStatement preparedStmt = conn.prepareStatement(query)) {
 
-            String query = " INSERT INTO plugin_gpt_memory_data (identityPlugin, identity, role, content, date)"
-                    + " VALUES (?, ?, ?, ?, ?)";
-            PreparedStatement preparedStmt = conn.prepareStatement(query);
             preparedStmt.setString(1, identityPlugin.getPluginName());
             preparedStmt.setString(2, identity);
             preparedStmt.setString(3, chatMessage.getRole().getValue());
@@ -58,7 +59,6 @@ public class DatabaseMemory {
             preparedStmt.setDate(5, date);
             preparedStmt.execute();
 
-            databaseModule.releaseConnection(conn);
         } catch (SQLException e) {
             STEMSystemApp.LOGGER.ERROR(e);
         }
@@ -70,26 +70,26 @@ public class DatabaseMemory {
 
         DatabaseModule databaseModule = STEMSystemApp.getInstance().getDatabaseModule();
 
-        try {
-            Connection conn = databaseModule.getConnection();
+        String query = "SELECT * FROM plugin_gpt_memory_data WHERE identityPlugin = ? AND identity = ? ORDER BY id DESC LIMIT 50";
+        try (Connection conn = databaseModule.getConnection();
+             PreparedStatement preparedStmt = conn.prepareStatement(query)) {
 
-            String query = "SELECT * FROM plugin_gpt_memory_data WHERE identityPlugin = '" + identityPlugin.getPluginName() + "' AND identity = '" + identity + "' ORDER BY id DESC LIMIT 50";
-            Statement st = conn.createStatement();
-            ResultSet rs = st.executeQuery(query);
+            preparedStmt.setString(1, identityPlugin.getPluginName());
+            preparedStmt.setString(2, identity);
 
-            while (rs.next()) {
-                STEMSystemApp.LOGGER.DEBUG("Loading gptID " + rs.getInt("id") + " from database");
-                String role = rs.getString("role");
-                String content = rs.getString("content");
+            try (ResultSet rs = preparedStmt.executeQuery()) {
+                while (rs.next()) {
+                    STEMSystemApp.LOGGER.DEBUG("Loading gptID " + rs.getInt("id") + " from database");
+                    String role = rs.getString("role");
+                    String content = rs.getString("content");
 
-                ChatMessage chatMessage = new ChatMessage(content, ChatRole.fromString(role));
-                this.dataMemory.addFirst(chatMessage);
+                    ChatMessage chatMessage = new ChatMessage(content, ChatRole.fromString(role));
+                    this.dataMemory.addFirst(chatMessage);
+                }
             }
 
-            databaseModule.releaseConnection(conn);
         } catch (SQLException e) {
             STEMSystemApp.LOGGER.ERROR(e);
         }
     }
-
 }

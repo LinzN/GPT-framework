@@ -8,9 +8,14 @@ import java.util.List;
 
 public class ChatMessage {
     private ChatRequestMessage chatRequestMessage = null;
+    private FunctionCall functionCall;
 
     public ChatMessage(ChatResponseMessage chatResponseMessage) {
         this(chatResponseMessage.getContent(), chatResponseMessage.getRole());
+
+        if(chatResponseMessage.getFunctionCall() != null){
+            functionCall = chatResponseMessage.getFunctionCall();
+        }
     }
 
     public ChatMessage(ChatRequestMessage chatRequestMessage) {
@@ -44,8 +49,10 @@ public class ChatMessage {
     }
 
     public String getContent() {
-        String content = "no content";
-        if (chatRequestMessage.getRole() == ChatRole.ASSISTANT) {
+        String content;
+        if(this.isFunctionCall()){
+            content = this.functionCall.getArguments();
+        } else if (chatRequestMessage.getRole() == ChatRole.ASSISTANT) {
             content = ((ChatRequestAssistantMessage) chatRequestMessage).getContent().toString();
         } else if (chatRequestMessage.getRole() == ChatRole.USER) {
             content = ((ChatRequestUserMessage) chatRequestMessage).getContent().toString();
@@ -55,12 +62,23 @@ public class ChatMessage {
             content = ((ChatRequestDeveloperMessage) chatRequestMessage).getContent().toString();
         } else if (chatRequestMessage.getRole() == ChatRole.TOOL) {
             content = ((ChatRequestToolMessage) chatRequestMessage).getContent().toString();
+        }else if (chatRequestMessage.getRole() == ChatRole.FUNCTION) {
+                content = ((ChatRequestFunctionMessage) chatRequestMessage).getContent();
+        } else {
+            throw new ChatMessageNoContentException();
         }
-
         return content;
     }
 
     public ChatRequestMessage convertToRequestMessage() {
         return chatRequestMessage;
+    }
+
+    public boolean isFunctionCall(){
+        return this.functionCall != null;
+    }
+
+    public FunctionCall getFunctionCall(){
+        return this.functionCall;
     }
 }
